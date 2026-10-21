@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Automated Web Security Scanner — Header & CORS Analysis</title>
+  <meta name="description" content="Scan any public website for HTTP security header misconfigurations and potentially unsafe CORS policies. Free, educational tool." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════  HEADER  ════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🛡️</span>
+      <span class="logo-text">WebSecScan</span>
+      <span class="logo-badge">v1.0</span>
+    </div>
+    <nav class="header-nav">
+      <a href="#scanner-section" class="nav-link">Scanner</a>
+      <a href="#results-section" class="nav-link">Results</a>
+      <a href="#about-section" class="nav-link">About</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ═══════════════════════  HERO SECTION  ══════════════════════════════ -->
+<section class="hero">
+  <div class="hero-bg-grid"></div>
+  <div class="hero-glow hero-glow-1"></div>
+  <div class="hero-glow hero-glow-2"></div>
+  <div class="hero-content">
+    <div class="hero-tag">
+      <span class="tag-dot"></span>Cybersecurity Tool
+    </div>
+    <h1 class="hero-title">
+      Automated Web<br/>
+      <span class="hero-title-accent">Security Scanner</span>
+    </h1>
+    <p class="hero-desc">
+      Inspect HTTP security headers and CORS configurations for misconfigurations.
+      Get prioritised findings, remediation guidance, and downloadable reports — instantly.
+    </p>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-n">5</span><span class="stat-l">Headers Checked</span></div>
+      <div class="stat-sep"></div>
+      <div class="stat"><span class="stat-n">4</span><span class="stat-l">CORS Headers</span></div>
+      <div class="stat-sep"></div>
+      <div class="stat"><span class="stat-n">3</span><span class="stat-l">Report Formats</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════  SCANNER INPUT  ═════════════════════════════ -->
+<section id="scanner-section" class="scanner-section">
+  <div class="container">
+    <div class="scan-card">
+      <div class="scan-card-header">
+        <h2 class="scan-card-title">🔍 Start Security Scan</h2>
+        <p class="scan-card-subtitle">Enter a public URL you own or have permission to test.</p>
+      </div>
+
+      <div class="scan-form-row">
+        <div class="input-wrapper">
+          <span class="input-prefix">https://</span>
+          <input
+            type="url"
+            id="url-input"
+            class="url-input"
+            placeholder="example.com"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+        <button id="scan-btn" class="scan-btn" onclick="startScan()">
+          <span class="scan-btn-text">Scan Now</span>
+          <span class="scan-btn-icon">→</span>
+        </button>
+      </div>
+
+      <!-- Validation message -->
+      <div id="validation-msg" class="validation-msg hidden"></div>
+
+      <!-- Progress -->
+      <div id="progress-area" class="progress-area hidden">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+        <div class="progress-steps">
+          <span class="ps" id="ps-validate">Validating URL…</span>
+          <span class="ps" id="ps-connect">Connecting…</span>
+          <span class="ps" id="ps-headers">Analysing headers…</span>
+          <span class="ps" id="ps-cors">Checking CORS…</span>
+          <span class="ps" id="ps-risk">Assessing risk…</span>
+        </div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="disclaimer">
+        <span class="disclaimer-icon">⚠️</span>
+        <span>Only scan websites you own or have explicit permission to test. This tool performs
+        passive HTTP header inspection only and is not a substitute for a professional penetration test.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════  RESULTS SECTION  ═══════════════════════════ -->
+<section id="results-section" class="results-section hidden">
+  <div class="container">
+
+    <!-- ── Connection Info Bar ── -->
+    <div class="info-bar" id="info-bar">
+      <div class="info-item">
+        <span class="info-label">Target</span>
+        <span class="info-value mono" id="info-url">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">HTTP Status</span>
+        <span class="info-value" id="info-status">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Scanned at</span>
+        <span class="info-value mono" id="info-time">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Connection</span>
+        <span class="info-value" id="info-conn">—</span>
+      </div>
+    </div>
+
+    <!-- ── Severity Summary ── -->
+    <div class="severity-summary" id="severity-summary">
+      <div class="sev-card sev-high">
+        <span class="sev-count" id="count-high">0</span>
+        <span class="sev-label">High</span>
+      </div>
+      <div class="sev-card sev-medium">
+        <span class="sev-count" id="count-medium">0</span>
+        <span class="sev-label">Medium</span>
+      </div>
+      <div class="sev-card sev-low">
+        <span class="sev-count" id="count-low">0</span>
+        <span class="sev-label">Low</span>
+      </div>
+      <div class="sev-card sev-info">
+        <span class="sev-count" id="count-info">0</span>
+        <span class="sev-label">Informational</span>
+      </div>
+    </div>
+
+    <!-- ── Tab Navigation ── -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-headers" onclick="switchTab(this)">
+        🔒 Security Headers
+      </button>
+      <button class="tab-btn" data-tab="tab-cors" onclick="switchTab(this)">
+        🌐 CORS Analysis
+      </button>
+      <button class="tab-btn" data-tab="tab-findings" onclick="switchTab(this)">
+        🎯 Findings
+        <span class="tab-badge" id="findings-badge">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-reports" onclick="switchTab(this)">
+        📄 Reports
+      </button>
+    </div>
+
+    <!-- ── Tab: Security Headers ── -->
+    <div class="tab-panel active" id="tab-headers">
+      <div class="table-wrapper">
+        <table class="results-table" id="headers-table">
+          <thead>
+            <tr>
+              <th>Header</th>
+              <th>Status</th>
+              <th>Value</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="headers-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Tab: CORS ── -->
+    <div class="tab-panel" id="tab-cors">
+      <div class="cors-summary-box" id="cors-summary-box"></div>
+      <div class="table-wrapper">
+        <table class="results-table" id="cors-table">
+          <thead>
+            <tr>
+              <th>Header</th>
+              <th>Value</th>
+              <th>Status</th>
+              <th>Analysis</th>
+            </tr>
+          </thead>
+          <tbody id="cors-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Tab: Findings ── -->
+    <div class="tab-panel" id="tab-findings">
+      <div id="findings-list"></div>
+    </div>
+
+    <!-- ── Tab: Reports ── -->
+    <div class="tab-panel" id="tab-reports">
+      <div class="reports-grid">
+        <div class="report-card">
+          <div class="report-icon">{ }</div>
+          <div class="report-info">
+            <h3>JSON Report</h3>
+            <p>Machine-readable structured data. Ideal for integrating with other tools or pipelines.</p>
+          </div>
+          <a href="/report/json" id="dl-json" class="dl-btn dl-json" download>
+            ⬇ Download JSON
+          </a>
+        </div>
+        <div class="report-card">
+          <div class="report-icon">⊞</div>
+          <div class="report-info">
+            <h3>CSV Report</h3>
+            <p>Spreadsheet-compatible format. Open in Excel or Google Sheets for further analysis.</p>
+          </div>
+          <a href="/report/csv" id="dl-csv" class="dl-btn dl-csv" download>
+            ⬇ Download CSV
+          </a>
+        </div>
+        <div class="report-card">
+          <div class="report-icon">📄</div>
+          <div class="report-info">
+            <h3>PDF Report</h3>
+            <p>Professional report for documentation, submission, or client presentation.</p>
+          </div>
+          <a href="/report/pdf" id="dl-pdf" class="dl-btn dl-pdf" download>
+            ⬇ Download PDF
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════  ABOUT SECTION  ═════════════════════════════ -->
+<section id="about-section" class="about-section">
+  <div class="container">
+    <h2 class="section-title">What This Scanner Checks</h2>
+    <div class="about-grid">
+      <div class="about-card">
+        <div class="about-icon">🔐</div>
+        <h3>Content-Security-Policy</h3>
+        <p>Controls resource loading origins, reducing XSS attack surface.</p>
+      </div>
+      <div class="about-card">
+        <div class="about-icon">🔒</div>
+        <h3>Strict-Transport-Security</h3>
+        <p>Forces HTTPS connections, preventing protocol downgrade attacks.</p>
+      </div>
+      <div class="about-card">
+        <div class="about-icon">🚫</div>
+        <h3>X-Content-Type-Options</h3>
+        <p>Prevents MIME-sniffing, blocking content-injection via file uploads.</p>
+      </div>
+      <div class="about-card">
+        <div class="about-icon">🖼️</div>
+        <h3>X-Frame-Options</h3>
+        <p>Blocks clickjacking by controlling iframe embedding behaviour.</p>
+      </div>
+      <div class="about-card">
+        <div class="about-icon">📡</div>
+        <h3>Referrer-Policy</h3>
+        <p>Limits referrer URL leakage to third-party origins.</p>
+      </div>
+      <div class="about-card">
+        <div class="about-icon">🌐</div>
+        <h3>CORS Headers</h3>
+        <p>Analyses cross-origin access policies for wildcard and credential risks.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════  FOOTER  ════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      🛡️ <strong>Automated Web Security Scanner</strong> — 
+      Educational cybersecurity tool. For authorised use only.
+      Findings are preliminary observations, not confirmed vulnerabilities.
+    </p>
+    <p class="footer-sub">Built with Python + Flask · ReportLab · Pytest</p>
+  </div>
+</footer>
+
+<script src="/static/js/script.js"></script>
+</body>
+</html>
